@@ -146,3 +146,4 @@ if submitted:
     st.warning(
         "This is an illustrative estimate based on only 20 "
         "sample records, not verified US property sales."
+    )
