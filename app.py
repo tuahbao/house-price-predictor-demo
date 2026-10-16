@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 # ==========================================
 
 st.set_page_config(
-    page_title="USA House Price Predictor",
+    page_title="USA House Price Predictor (Demo)",
     page_icon="🏠"
 )
 
