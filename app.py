@@ -5,24 +5,15 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestRegressor
 
-# ==========================================
-# USA HOUSE PRICE PREDICTOR
-# Illustrative sample data, not real sales
-# ==========================================
-
 st.set_page_config(
     page_title="USA House Price Predictor",
-    page_icon="🏠",
-    layout="centered"
+    page_icon="🏠"
 )
 
 st.title("🏠 USA House Price Predictor")
-st.write(
-    "Enter your property assumptions to estimate "
-    "a house price in US dollars (USD)."
-)
+st.write("Enter property details to estimate the price in USD.")
 
-# 1. Sample training data
+# Sample data: illustrative values, not actual market data
 data = pd.DataFrame({
     "location": [
         "New York", "New York", "New York",
@@ -31,16 +22,13 @@ data = pd.DataFrame({
         "Chicago", "Chicago", "Chicago",
         "Miami", "Miami", "Miami",
         "Dallas", "Dallas", "Dallas",
-        "New York", "Los Angeles", "Houston"
+        "New York", "Los Angeles"
     ],
     "size": [
-        800, 1200, 1800,
-        900, 1500, 2200,
-        1200, 1800, 2500,
-        1000, 1600, 2200,
-        900, 1400, 2000,
-        1200, 1800, 2600,
-        2500, 1100, 1500
+        800, 1200, 1800, 900, 1500, 2200,
+        1200, 1800, 2500, 1000, 1600, 2200,
+        900, 1400, 2000, 1200, 1800, 2600,
+        2500, 1100
     ],
     "bedrooms": [
         1, 2, 3, 2, 3, 4, 3, 3, 4, 2,
@@ -57,78 +45,51 @@ data = pd.DataFrame({
         "Condo", "Single-family", "Single-family",
         "Condo", "Single-family", "Single-family",
         "Single-family", "Single-family", "Single-family",
-        "Single-family", "Condo", "Single-family"
+        "Single-family", "Condo"
     ],
     "age": [
         10, 20, 15, 8, 12, 5, 15, 10, 8, 20,
         12, 10, 8, 15, 5, 12, 8, 5, 10, 10
     ],
     "price": [
-        500000, 750000, 1200000,
-        550000, 900000, 1400000,
-        250000, 350000, 450000,
-        280000, 400000, 550000,
-        450000, 650000, 1000000,
-        300000, 450000, 650000,
-        1600000, 700000, 320000
+        500000, 750000, 1200000, 550000, 900000,
+        1400000, 250000, 350000, 450000, 280000,
+        400000, 550000, 450000, 650000, 1000000,
+        300000, 450000, 650000, 1600000, 700000
     ]
 })
 
-# 2. Prepare model inputs
-X = data.drop(columns="price")
+# Verify that every column has the same number of rows
+assert data.apply(len).nunique() == 1, "Columns have unequal lengths"
+
+X = data.drop(columns=["price"])
 y = data["price"]
 
-numeric_features = [
-    "size", "bedrooms", "bathrooms", "age"
-]
-
-categorical_features = [
-    "location", "property_type"
-]
-
-# 3. Preprocess data
 preprocessor = ColumnTransformer([
-    (
-        "categories",
-        OneHotEncoder(handle_unknown="ignore"),
-        categorical_features
-    ),
-    (
-        "numbers",
-        "passthrough",
-        numeric_features
-    )
+    ("categories",
+     OneHotEncoder(handle_unknown="ignore"),
+     ["location", "property_type"]),
+    ("numbers", "passthrough",
+     ["size", "bedrooms", "bathrooms", "age"])
 ])
 
-# 4. Train the model
 model = Pipeline([
     ("preprocessor", preprocessor),
-    (
-        "regressor",
-        RandomForestRegressor(
-            n_estimators=100,
-            random_state=42
-        )
-    )
+    ("regressor", RandomForestRegressor(
+        n_estimators=100,
+        random_state=42
+    ))
 ])
 
 model.fit(X, y)
 
-# 5. User input form
-st.subheader("Enter Property Details")
+st.success("Model trained successfully!")
 
 with st.form("house_form"):
-
     location = st.selectbox(
         "US City",
-        [
-            "New York",
-            "Los Angeles",
-            "Houston",
-            "Chicago",
-            "Miami",
-            "Dallas"
-        ]
+        ["New York", "Los Angeles", "Houston",
+         "Chicago", "Miami", "Dallas"]
     )
 
     size = st.number_input(
@@ -140,37 +101,28 @@ with st.form("house_form"):
     )
 
     bedrooms = st.selectbox(
-        "Number of bedrooms",
-        [1, 2, 3, 4, 5, 6, 7]
+        "Bedrooms", [1, 2, 3, 4, 5, 6, 7], index=2
     )
 
     bathrooms = st.selectbox(
-        "Number of bathrooms",
-        [1, 2, 3, 4, 5, 6]
+        "Bathrooms", [1, 2, 3, 4, 5, 6], index=1
     )
 
     property_type = st.selectbox(
-        "Property type",
-        ["Condo", "Single-family"]
+        "Property type", ["Condo", "Single-family"]
     )
 
     age = st.number_input(
         "Property age (years)",
         min_value=0,
         max_value=150,
-        value=10,
-        step=1
+        value=10
     )
 
-    submitted = st.form_submit_button(
-        "Predict House Price",
-        type="primary"
-    )
+    submitted = st.form_submit_button("Predict House Price")
 
-# 6. Make prediction
 if submitted:
-
-    new_house = pd.DataFrame([{
+    house = pd.DataFrame([{
         "location": location,
         "size": size,
         "bedrooms": bedrooms,
@@ -179,27 +131,18 @@ if submitted:
         "age": age
     }])
 
-    predicted_price = model.predict(new_house)[0]
+    predicted_price = model.predict(house)[0]
 
-    st.success(
-        f"Estimated House Price: ${predicted_price:,.0f}"
-    )
+    st.success(f"Estimated House Price: ${predicted_price:,.0f}")
 
     st.write("### Your assumptions")
-    st.write(f"- Location: {location}, USA")
-    st.write(f"- Size: {size:,} sq ft")
-    st.write(f"- Bedrooms: {bedrooms}")
-    st.write(f"- Bathrooms: {bathrooms}")
-    st.write(f"- Property type: {property_type}")
-    st.write(f"- Age: {age} years")
+    st.write(f"Location: {location}, USA")
+    st.write(f"Size: {size:,} sq ft")
+    st.write(f"Bedrooms: {bedrooms}")
+    st.write(f"Bathrooms: {bathrooms}")
+    st.write(f"Property type: {property_type}")
+    st.write(f"Age: {age} years")
 
     st.warning(
-        "Demo only: this estimate uses illustrative sample "
-        "data, not verified US property sales. Do not use "
-        "it for actual buying or selling decisions."
-    )
-
-st.divider()
-st.caption(
-    "Built with Python, Streamlit, and Scikit-learn."
-)
+        "This is an illustrative estimate based on only 20 "
+        "sample records, not verified US property sales."
