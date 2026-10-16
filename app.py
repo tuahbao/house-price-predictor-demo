@@ -14,7 +14,7 @@ st.set_page_config(
     page_icon="🏠"
 )
 
-st.title("🏠 USA House Price Predictor")
+st.title("🏠 USA House Price Predictor (Demo)")
 st.write("Enter property details to estimate the price in USD.")
 
 # ==========================================
